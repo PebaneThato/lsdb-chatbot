@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ChatbotService } from '../services/chatbot.service';
+import { ChatbotService } from '../../services/chatbot.service';
 
 export interface User {
   name: string;
@@ -96,7 +96,7 @@ export class ChatbotComponent implements OnInit {
   private async showMainOptions() {
     try {
       const options = await this.chatbotService.getMainOptions().toPromise();
-      this.currentOptions = options;
+      this.currentOptions = options!;
     } catch (error) {
       console.error('Error loading main options:', error);
     }
@@ -126,13 +126,13 @@ export class ChatbotComponent implements OnInit {
   private async showCourses() {
     this.addBotMessage('Great! Here are our available courses:');
     const courses = await this.chatbotService.getCourses().toPromise();
-    this.currentOptions = courses;
+    this.currentOptions = courses!;
   }
 
   private async showInternships() {
     this.addBotMessage('Excellent! Here are our internship opportunities:');
     const internships = await this.chatbotService.getInternships().toPromise();
-    this.currentOptions = internships;
+    this.currentOptions = internships!;
   }
 
   private async showContactInfo() {
@@ -140,8 +140,8 @@ export class ChatbotComponent implements OnInit {
     this.addBotMessage(`
       <div class="contact-info">
         <strong>Contact Information</strong><br>
-        <p><i class="fas fa-phone"></i> Phone: ${contact.phone}</p>
-        <p><i class="fas fa-envelope"></i> Email: ${contact.email}</p>
+        <p><i class="bi bi-telephone"></i> Phone: ${contact!.phone}</p>
+        <p><i class="bi bi-envelope"></i> Email: ${contact!.email}</p>
       </div>
     `);
   }

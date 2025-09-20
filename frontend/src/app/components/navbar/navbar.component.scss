@@ -1,0 +1,67 @@
+.navbar {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+    padding: 15px 0;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    color: #2c6bed !important;
+    font-size: 1.5rem;
+}
+
+.navbar-brand:hover {
+    color: #1a4db3 !important;
+}
+
+.navbar-nav .nav-link {
+    color: #333 !important;
+    font-weight: 500;
+    margin: 0 10px;
+    padding: 8px 16px !important;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    background: linear-gradient(135deg, #2c6bed, #1a4db3);
+    color: white !important;
+    transform: translateY(-2px);
+}
+
+.navbar-nav .nav-link.active {
+    background: linear-gradient(135deg, #2c6bed, #1a4db3);
+    color: white !important;
+}
+
+.navbar-toggler {
+    border: none;
+    padding: 4px 8px;
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%2844, 107, 237, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='m4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border-radius: 15px;
+    padding: 10px 0;
+}
+
+.dropdown-item {
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+}
+
+.dropdown-item:hover {
+    background: #f8f9ff;
+    color: #2c6bed;
+    padding-left: 30px;
+}

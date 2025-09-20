@@ -1,0 +1,39 @@
+<form #userForm="ngForm" (ngSubmit)="onSubmit(userForm)" class="user-form">
+  <div class="form-group">
+    <label for="userName">Your Name:</label>
+    <input type="text" 
+           id="userName" 
+           name="userName"
+           [(ngModel)]="user.name"
+           placeholder="Enter your name" 
+           required
+           #userName="ngModel"
+           class="form-control">
+    <div *ngIf="userName.invalid && userName.touched" class="error-message">
+      Name is required
+    </div>
+  </div>
+  
+  <div class="form-group">
+    <label for="userEmail">Email Address:</label>
+    <input type="email" 
+           id="userEmail" 
+           name="userEmail"
+           [(ngModel)]="user.email"
+           placeholder="Enter your email" 
+           required
+           email
+           #userEmail="ngModel"
+           class="form-control">
+    <div *ngIf="userEmail.invalid && userEmail.touched" class="error-message">
+      <span *ngIf="userEmail.errors?.['required']">Email is required</span>
+      <span *ngIf="userEmail.errors?.['email']">Please enter a valid email</span>
+    </div>
+  </div>
+  
+  <button type="submit" 
+          class="btn-start" 
+          [disabled]="userForm.invalid">
+    Start Chat
+  </button>
+</form>
