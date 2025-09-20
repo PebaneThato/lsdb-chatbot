@@ -1,0 +1,44 @@
+<!-- Chatbot Icon -->
+<div class="chatbot-icon" (click)="toggleChatbot()" [class.hidden]="isOpen">
+  <i class="fas fa-comments"></i>
+</div>
+
+<!-- Chatbot Container -->
+<div class="chatbot-container" [class.hidden]="!isOpen">
+  <div class="chatbot-header">
+    <h5>LSDB Chatbot</h5>
+    <button class="close-chat" (click)="closeChatbot()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+  
+  <div class="chatbot-body">
+    <!-- User Registration Form -->
+    <div class="user-form" [class.hidden]="!showUserForm">
+      <app-user-form (userSubmitted)="startChat($event)"></app-user-form>
+    </div>
+
+    <!-- Chat Messages -->
+    <div class="chat-messages" [class.hidden]="showUserForm">
+      <div *ngFor="let message of messages" class="message">
+        <div [ngClass]="message.type + '-message'" [innerHTML]="message.content"></div>
+      </div>
+      
+      <!-- Options -->
+      <div class="options-container" *ngIf="currentOptions.length > 0">
+        <button *ngFor="let option of currentOptions" 
+                class="option-btn" 
+                (click)="handleMainOption(option.id, option.text)">
+          {{ option.text }}
+        </button>
+      </div>
+      
+      <!-- Restart Button -->
+      <button *ngIf="messages.length > 0 && currentOptions.length === 0" 
+              class="restart-btn" 
+              (click)="restartChat()">
+        Restart Chat
+      </button>
+    </div>
+  </div>
+</div>
