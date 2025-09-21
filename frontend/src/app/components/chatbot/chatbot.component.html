@@ -28,7 +28,7 @@
       <div class="options-container" *ngIf="currentOptions.length > 0">
         <button *ngFor="let option of currentOptions" 
                 class="option-btn" 
-                (click)="handleMainOption(option.id, option.text)">
+                (click)="handleMainOption(option)">
           {{ option.text }}
         </button>
       </div>

@@ -1,23 +1,12 @@
-class Database {
-    private $host = "mysql";
-    private $db_name = "lsdb_chatbot";
-    private $username = "root";
-    private $password = "rootpassword";
-    public $conn;
+<?php
+$host = 'mysql';
+$db = 'lsdb_chatbot';
+$user = 'root';
+$pass = 'rootpassword';
 
-    public function getConnection() {
-        $this->conn = null;
-        try {
-            $this->conn = new PDO(
-                "mysql:host=" . $this->host . ";dbname=" . $this->db_name,
-                $this->username,
-                $this->password
-            );
-            $this->conn->exec("set names utf8");
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch(PDOException $exception) {
-            echo "Connection error: " . $exception->getMessage();
-        }
-        return $this->conn;
-    }
+$conn = new mysqli($host, $user, $pass, $db);
+
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
+?>

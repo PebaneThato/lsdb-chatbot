@@ -1,78 +1,124 @@
 <?php
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: http://localhost:4200');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+// ===============================
+// api/save-user.php
+// ===============================
+require_once '../config/database.php';
+require_once '../config/cors.php';
+require_once '../config/response.php';
+require_once '../config/helpers.php';
 
-// Handle preflight OPTIONS request
+setCorsHeaders();
+
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);
-    exit();
+    exit(0);
 }
 
-include_once '../config/database.php';
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    sendErrorResponse('Method not allowed', 405);
+}
 
 try {
-    $database = new Database();
-    $db = $database->getConnection();
     
     $input = json_decode(file_get_contents('php://input'), true);
     
     if (!isset($input['name']) || !isset($input['email'])) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Name and email are required']);
-        exit();
+        sendErrorResponse('Name and email are required', 400);
     }
     
-    $name = trim($input['name']);
-    $email = trim($input['email']);
+    $name = sanitizeInput($input['name']);
+    $email = sanitizeInput($input['email']);
     
-    // Validate email
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Invalid email format']);
-        exit();
+    if (!validateEmail($email)) {
+        sendErrorResponse('Invalid email format', 400);
     }
     
-    // Check if user already exists
-    $check_query = "SELECT id FROM users WHERE email = :email";
-    $check_stmt = $db->prepare($check_query);
-    $check_stmt->bindParam(':email', $email);
-    $check_stmt->execute();
+    // Check if user already exists using MySQLi prepared statement
+    $check_query = "SELECT id FROM users WHERE email = ? LIMIT 1";
+    $check_stmt = $conn->prepare($check_query);
     
-    if ($check_stmt->rowCount() > 0) {
-        // User exists, update name and last_active
-        $update_query = "UPDATE users SET name = :name, last_active = NOW() WHERE email = :email";
-        $update_stmt = $db->prepare($update_query);
-        $update_stmt->bindParam(':name', $name);
-        $update_stmt->bindParam(':email', $email);
-        $update_stmt->execute();
+    if (!$check_stmt) {
+        logError("Prepare failed for user check: " . $conn->error);
+        sendErrorResponse('Database error occurred', 500);
+    }
+    
+    $check_stmt->bind_param("s", $email);
+    
+    if (!$check_stmt->execute()) {
+        logError("Execute failed for user check: " . $check_stmt->error);
+        $check_stmt->close();
+        sendErrorResponse('Database error occurred', 500);
+    }
+    
+    $result = $check_stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        // User exists - update name and last_active
+        $user_row = $result->fetch_assoc();
+        $user_id = $user_row['id'];
         
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'User updated successfully',
-            'user_id' => $check_stmt->fetch(PDO::FETCH_ASSOC)['id']
-        ]);
+        $update_query = "UPDATE users SET name = ?, last_active = NOW(), total_interactions = total_interactions + 1 WHERE email = ?";
+        $update_stmt = $conn->prepare($update_query);
+        
+        if (!$update_stmt) {
+            logError("Prepare failed for user update: " . $conn->error);
+            $check_stmt->close();
+            sendErrorResponse('Database error occurred', 500);
+        }
+        
+        $update_stmt->bind_param("ss", $name, $email);
+        
+        if (!$update_stmt->execute()) {
+            logError("Execute failed for user update: " . $update_stmt->error);
+            $update_stmt->close();
+            $check_stmt->close();
+            sendErrorResponse('Database error occurred', 500);
+        }
+        
+        $affected_rows = $conn->affected_rows;
+        $update_stmt->close();
+        
+        logError("User updated: $email (ID: $user_id)");
+        
     } else {
         // Insert new user
-        $insert_query = "INSERT INTO users (name, email, created_at, last_active) VALUES (:name, :email, NOW(), NOW())";
-        $insert_stmt = $db->prepare($insert_query);
-        $insert_stmt->bindParam(':name', $name);
-        $insert_stmt->bindParam(':email', $email);
-        $insert_stmt->execute();
+        $insert_query = "INSERT INTO users (name, email, created_at, last_active, total_interactions) VALUES (?, ?, NOW(), NOW(), 1)";
+        $insert_stmt = $conn->prepare($insert_query);
         
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'User saved successfully',
-            'user_id' => $db->lastInsertId()
-        ]);
+        if (!$insert_stmt) {
+            logError("Prepare failed for user insert: " . $conn->error);
+            $check_stmt->close();
+            sendErrorResponse('Database error occurred', 500);
+        }
+        
+        $insert_stmt->bind_param("ss", $name, $email);
+        
+        if (!$insert_stmt->execute()) {
+            logError("Execute failed for user insert: " . $insert_stmt->error);
+            $insert_stmt->close();
+            $check_stmt->close();
+            sendErrorResponse('Database error occurred', 500);
+        }
+        
+        $user_id = $conn->insert_id;
+        $affected_rows = $conn->affected_rows;
+        $insert_stmt->close();
+        
+        logError("New user created: $email (ID: $user_id)");
     }
     
-} catch(PDOException $exception) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $exception->getMessage()]);
-} catch(Exception $exception) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Server error: ' . $exception->getMessage()]);
+    $check_stmt->close();
+    $conn->close();
+    
+    sendJsonResponse([
+        'status' => 'success',
+        'message' => 'User saved successfully',
+        'user_id' => (int)$user_id,
+        'affected_rows' => $affected_rows,
+        'timestamp' => date('Y-m-d H:i:s')
+    ]);
+    
+} catch (Exception $exception) {
+    logError("Save user error: " . $exception->getMessage());
+    sendErrorResponse('Server error occurred', 500);
 }
 ?>

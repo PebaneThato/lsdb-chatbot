@@ -12,6 +12,10 @@ export interface ChatMessage {
   timestamp: Date;
 }
 
+export interface MainOptions {
+  data : ChatOption[];
+}
+
 export interface ChatOption {
   id: string;
   text: string;
@@ -29,6 +33,7 @@ export class ChatbotComponent implements OnInit {
   currentUser: User = { name: '', email: '' };
   messages: ChatMessage[] = [];
   currentOptions: ChatOption[] = [];
+  activeOption: string = '';
   
   constructor(private chatbotService: ChatbotService) {}
 
@@ -96,26 +101,30 @@ export class ChatbotComponent implements OnInit {
   private async showMainOptions() {
     try {
       const options = await this.chatbotService.getMainOptions().toPromise();
-      this.currentOptions = options!;
+      this.currentOptions = options!.data;
     } catch (error) {
       console.error('Error loading main options:', error);
     }
   }
 
-  async handleMainOption(optionId: string, optionText: string) {
-    this.addUserMessage(optionText);
+  async handleMainOption(option: any) {
+    this.addUserMessage(option.text);
     this.currentOptions = [];
-
     try {
-      switch(optionId) {
+      switch(option.id) {
         case 'courses':
           await this.showCourses();
+          this.activeOption = 'Course';
           break;
         case 'internships':
           await this.showInternships();
+          this.activeOption = 'Internship';
           break;
         case 'contact':
           await this.showContactInfo();
+          break;
+        default:
+          await this.showDetails(option);
           break;
       }
     } catch (error) {
@@ -124,45 +133,34 @@ export class ChatbotComponent implements OnInit {
   }
 
   private async showCourses() {
-    this.addBotMessage('Great! Here are our available courses:');
+    this.addBotMessage('We offer the following digital courses, Please select one:');
     const courses = await this.chatbotService.getCourses().toPromise();
-    this.currentOptions = courses!;
+    this.currentOptions = courses!.data;
   }
 
   private async showInternships() {
-    this.addBotMessage('Excellent! Here are our internship opportunities:');
+    this.addBotMessage('We offer the following internship opportunities, Please select one:');
     const internships = await this.chatbotService.getInternships().toPromise();
-    this.currentOptions = internships!;
+    this.currentOptions = internships!.data;
   }
 
   private async showContactInfo() {
     const contact = await this.chatbotService.getContactInfo().toPromise();
+    console.log(contact);
+    const data = contact!.data;
     this.addBotMessage(`
       <div class="contact-info">
         <strong>Contact Information</strong><br>
-        <p><i class="bi bi-telephone"></i> Phone: ${contact!.phone}</p>
-        <p><i class="bi bi-envelope"></i> Email: ${contact!.email}</p>
+        <p><i class="bi bi-telephone"></i> Phone: ${data.primary_contact.phone}</p>
+        <p><i class="bi bi-envelope"></i> Email: ${data.primary_contact.email}</p>
       </div>
     `);
   }
 
-  showCourseDetails(course: ChatOption) {
-    this.addUserMessage(course.text);
+  showDetails(course: ChatOption) {
     this.addBotMessage(`
       <div class="course-link">
-        <strong>${course.text}</strong><br>
-        <a href="${course.link}" target="_blank">Click here for more details about ${course.text}</a>
-      </div>
-    `);
-    this.currentOptions = [];
-  }
-
-  showInternshipDetails(internship: ChatOption) {
-    this.addUserMessage(internship.text);
-    this.addBotMessage(`
-      <div class="internship-link">
-        <strong>${internship.text} Internship</strong><br>
-        <a href="${internship.link}" target="_blank">Click here for more details about ${internship.text} internship</a>
+        For more information you can visit this link: <a href="${course.link}" target="_blank">${course.text + ' ' + this.activeOption} </a>
       </div>
     `);
     this.currentOptions = [];
@@ -171,6 +169,7 @@ export class ChatbotComponent implements OnInit {
   restartChat() {
     this.messages = [];
     this.currentOptions = [];
+    this.activeOption = '';
     this.addBotMessage(`Hello ${this.currentUser.name}! 👋<br>Hey there! Please select an option to get started.`);
     this.showMainOptions();
   }
