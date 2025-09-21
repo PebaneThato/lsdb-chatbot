@@ -146,7 +146,6 @@ export class ChatbotComponent implements OnInit {
 
   private async showContactInfo() {
     const contact = await this.chatbotService.getContactInfo().toPromise();
-    console.log(contact);
     const data = contact!.data;
     this.addBotMessage(`
       <div class="contact-info">
